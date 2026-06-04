@@ -26,44 +26,37 @@ h1{
 margin-bottom:25px;
 }
 
-label{
-display:block;
-margin-bottom:8px;
-font-weight:600;
-}
-
 input{
 width:100%;
 padding:12px;
-margin-bottom:18px;
+margin-bottom:15px;
 border:1px solid #ddd;
 border-radius:8px;
-outline:none;
 }
 
 button{
-width:100%;
 padding:12px;
 border:none;
 border-radius:8px;
 cursor:pointer;
-font-size:15px;
 }
 
-button:hover{
-opacity:.9;
+#generateBtn{
+width:100%;
 }
 
 #result{
+display:none;
 margin-top:20px;
 padding:15px;
+background:#f5f5f5;
 border-radius:8px;
-display:none;
 word-break:break-all;
 }
 
-.success{
-background:#f5f5f5;
+#copyBtn{
+margin-top:12px;
+width:100%;
 }
 
 a{
@@ -77,21 +70,19 @@ text-decoration:none;
 
 <h1>Short Link Generator</h1>
 
-<label>Link Panjang</label>
-
 <input
 id="url"
 type="url"
 placeholder="https://example.com">
 
-<label>Custom Nama</label>
-
 <input
 id="code"
 type="text"
-placeholder="Contoh: Youtube">
+placeholder="Custom nama">
 
-<button onclick="generate()">
+<button
+id="generateBtn"
+onclick="generate()">
 Generate
 </button>
 
@@ -100,7 +91,9 @@ Generate
 <script>
 
 const API =
-"https://script.google.com/macros/s/AKfycbzq2D8ln6CG1qfu0wwLDbPaUohL1X6l--HNUAXN3lacTeNzEOxgFYBrxtste6LsAdKN/exec";
+"https://script.google.com/macros/s/AKfycbyaCy5gQEFrQRV_oStnW-cVpthxtT4qqUk_00zbUDgCs7deTJNeDOcNaLM1lBzaz4Fp/exec";
+
+let generatedLink = "";
 
 async function generate(){
 
@@ -119,7 +112,8 @@ return;
 
 try{
 
-const response = await fetch(API,{
+const response =
+await fetch(API,{
 method:"POST",
 body:JSON.stringify({
 url,
@@ -132,22 +126,42 @@ await response.json();
 
 if(data.success){
 
-const shortUrl =
-`${location.origin}${location.pathname.replace("admin.html","")}?c=${encodeURIComponent(code)}`;
+generatedLink =
+data.shortUrl;
 
 const result =
 document.getElementById("result");
 
-result.style.display = "block";
-result.className = "success";
+result.style.display =
+"block";
 
 result.innerHTML = `
-<b>Berhasil dibuat</b>
+
+<b>✅ Berhasil dibuat</b>
+
 <br><br>
-<a href="${shortUrl}" target="_blank">
-${shortUrl}
+
+<a href="${generatedLink}"
+target="_blank">
+
+${generatedLink}
+
 </a>
+
+<br><br>
+
+<button
+id="copyBtn"
+onclick="copyLink()">
+
+Salin Link
+
+</button>
+
 `;
+
+document.getElementById("url").value="";
+document.getElementById("code").value="";
 
 }else{
 
@@ -160,6 +174,26 @@ alert(data.message);
 alert("Gagal terhubung ke server");
 
 }
+
+}
+
+function copyLink(){
+
+navigator.clipboard
+.writeText(generatedLink);
+
+const btn =
+document.getElementById("copyBtn");
+
+btn.innerText =
+"Tersalin ✓";
+
+setTimeout(()=>{
+
+btn.innerText =
+"Salin Link";
+
+},2000);
 
 }
 
