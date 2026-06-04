@@ -1,42 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Short Link Generator</title>
 
 <style>
-
 body{
-font-family:sans-serif;
-max-width:500px;
+font-family:system-ui,sans-serif;
+max-width:600px;
 margin:auto;
-padding:20px;
+padding:30px;
+}
+
+h1{
+margin-bottom:20px;
 }
 
 input{
 width:100%;
 padding:12px;
-margin:8px 0;
-box-sizing:border-box;
+margin-bottom:12px;
+border:1px solid #ddd;
+border-radius:8px;
 }
 
 button{
 width:100%;
 padding:12px;
+border:none;
+border-radius:8px;
 cursor:pointer;
 }
 
-.result{
+#result{
 margin-top:20px;
 word-break:break-all;
 }
-
 </style>
 </head>
-
 <body>
 
-<h2>Short Link Generator</h2>
+<h1>Short Link Generator</h1>
 
 <input
 id="url"
@@ -44,32 +49,33 @@ placeholder="https://example.com">
 
 <input
 id="code"
-placeholder="custom nama">
+placeholder="Custom nama">
 
 <button onclick="generate()">
 Generate
 </button>
 
-<div
-class="result"
-id="result">
-</div>
+<div id="result"></div>
 
 <script>
 
-const API_URL =
+const API =
 "https://script.google.com/macros/s/AKfycbzq2D8ln6CG1qfu0wwLDbPaUohL1X6l--HNUAXN3lacTeNzEOxgFYBrxtste6LsAdKN/exec";
 
 async function generate(){
 
 const url =
-document.getElementById("url").value;
+document.getElementById("url").value.trim();
 
 const code =
-document.getElementById("code").value;
+document.getElementById("code").value.trim();
 
-const res =
-await fetch(API_URL,{
+if(!url || !code){
+alert("Lengkapi data terlebih dahulu");
+return;
+}
+
+const res = await fetch(API,{
 method:"POST",
 body:JSON.stringify({
 url,
@@ -77,24 +83,17 @@ code
 })
 });
 
-const data =
-await res.json();
+const data = await res.json();
 
 if(data.success){
 
 const shortUrl =
-`${location.origin}${location.pathname}?code=${code}`;
+`${location.origin}${location.pathname.replace("index.html","")}go.html?c=${code}`;
 
-document.getElementById(
-"result"
-).innerHTML =
-
+document.getElementById("result").innerHTML =
 `
-<b>Berhasil dibuat</b>
-<br><br>
-<a href="${shortUrl}">
-${shortUrl}
-</a>
+<p><b>Berhasil dibuat</b></p>
+<a href="${shortUrl}" target="_blank">${shortUrl}</a>
 `;
 
 }else{
@@ -102,36 +101,6 @@ ${shortUrl}
 alert(data.message);
 
 }
-
-}
-
-const params =
-new URLSearchParams(
-location.search
-);
-
-const code =
-params.get("code");
-
-if(code){
-
-fetch(
-`${API_URL}?code=${code}`
-)
-
-.then(r=>r.json())
-
-.then(data=>{
-
-if(data.success){
-
-location.replace(
-data.url
-);
-
-}
-
-});
 
 }
 
