@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>ShortLink Admin</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,sans-serif}
+body{max-width:700px;margin:auto;padding:24px 16px 60px;color:#1f2937}
+h1{margin-bottom:6px}
+h2{margin:0 0 14px;font-size:1.1rem}
+.sub{color:#666;font-size:.85rem;margin-bottom:18px}
+input,textarea,select{width:100%;padding:11px;margin-bottom:12px;border:1px solid #ddd;border-radius:8px;font-size:.95rem}
+textarea{resize:vertical;min-height:70px}
+label{display:block;font-size:.8rem;color:#555;margin-bottom:4px}
+button{padding:11px 14px;border:none;border-radius:8px;cursor:pointer;background:#111;color:#fff;font-size:.9rem}
+button.sec{background:#eee;color:#111}
+button.danger{background:#fee2e2;color:#b91c1c}
+button:disabled{opacity:.5;cursor:wait}
+.card{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:18px}
+.tabs{display:flex;gap:8px;margin-bottom:18px}
+.tabs button{flex:1;background:#eee;color:#111}
+.tabs button.on{background:#111;color:#fff}
+.row{display:flex;gap:8px}
+.row>*{flex:1}
+.lrow{display:flex;gap:6px;margin-bottom:8px;align-items:center}
+.lrow input{margin:0}
+.lrow button{padding:9px 11px;flex:none}
+.res{display:none;margin-top:14px;padding:14px;background:#f5f5f5;border-radius:8px;word-break:break-all;font-size:.9rem}
+.res a{color:#2563eb}
+.item{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #eee;font-size:.88rem}
+.item:last-child{border:0}
+.item .t{flex:1;min-width:0;word-break:break-all}
+.item .t small{color:#777;display:block}
+.item button{padding:7px 10px;font-size:.8rem}
+.hide{display:none}
+.colors{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.colors input[type=color]{height:42px;padding:3px}
+</style>
+</head>
+<body>
+
+<h1>ShortLink Admin</h1>
+<p class="sub">Buat short link dengan preview, atau halaman kumpulan link.</p>
+
+<div class="card">
+  <label>Kunci admin</label>
+  <input id="key" type="password" placeholder="ADMIN_KEY dari Script Properties" autocomplete="current-password">
+  <label style="display:flex;gap:8px;align-items:center;margin:0"><input id="remember" type="checkbox" style="width:auto;margin:0"> Ingat di perangkat ini</label>
+</div>
+
+<div class="tabs">
+  <button id="tab-link" class="on" onclick="showTab('link')">Short Link</button>
+  <button id="tab-page" onclick="showTab('page')">Halaman Link</button>
+  <button id="tab-list" onclick="showTab('list')">Daftar</button>
+</div>
+
+<!-- ============ SHORT LINK ============ -->
+<div id="sec-link" class="card">
+  <h2>Buat Short Link</h2>
+  <label>URL tujuan</label>
+  <input id="url" type="url" placeholder="https://example.com/halaman">
+  <label>Nama custom</label>
+  <input id="code" type="text" placeholder="Piala_di_Ujung_Sunyi">
+
+  <details style="margin-bottom:12px">
+    <summary style="cursor:pointer;font-size:.85rem;color:#555">Ubah preview manual (opsional)</summary>
+    <div style="margin-top:10px">
+      <p class="sub">Kosongkan untuk mengambil otomatis dari website tujuan.</p>
+      <label>Judul</label><input id="ptitle" type="text">
+      <label>Deskripsi</label><textarea id="pdesc"></textarea>
+      <label>URL gambar</label><input id="pimage" type="url" placeholder="https://...jpg">
+    </div>
+  </details>
+
+  <button id="btnLink" style="width:100%" onclick="createLink()">Generate</button>
+  <div id="resLink" class="res"></div>
+</div>
+
+<!-- ============ HALAMAN LINK ============ -->
+<div id="sec-page" class="card hide">
+  <h2 id="pageHead">Buat Halaman Link</h2>
+  <label>Nama halaman (jadi alamat /p/nama/)</label>
+  <input id="pcode" type="text" placeholder="webinar-zero-violence">
+  <label>Judul</label>
+  <input id="pgTitle" type="text" placeholder='Webinar "Zero Violence"'>
+  <label>Deskripsi</label>
+  <textarea id="pgDesc"></textarea>
+  <label>URL logo / gambar atas (opsional)</label>
+  <input id="pgAvatar" type="url" placeholder="https://...png">
+  <label>Teks footer (opsional)</label>
+  <input id="pgFooter" type="text">
+
+  <label style="margin-top:6px">Daftar tombol link</label>
+  <div id="linkRows"></div>
+  <button class="sec" style="margin-bottom:16px" onclick="addRow()">+ Tambah link</button>
+
+  <label>Template tema (klik untuk memakai, lalu boleh diubah)</label>
+  <div id="presets" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
+  <label>Tampilan</label>
+  <div class="colors">
+    <div><label>Latar atas</label><input id="thFrom" type="color" value="#ffffff"></div>
+    <div><label>Latar bawah</label><input id="thTo" type="color" value="#c9fbea"></div>
+    <div><label>Warna teks</label><input id="thText" type="color" value="#1f2937"></div>
+    <div><label>Warna tombol</label><input id="thBtn" type="color" value="#ffffff"></div>
+    <div><label>Teks tombol</label><input id="thBtnText" type="color" value="#111827"></div>
+    <div><label>Sudut (px)</label><input id="thRadius" type="number" min="0" max="30" value="10"></div>
+  </div>
+  <label>Gaya tombol</label>
+  <select id="thStyle"><option value="solid">Solid</option><option value="outline">Outline</option></select>
+
+  <div class="row">
+    <button id="btnPage" onclick="savePage()">Simpan &amp; Publikasikan</button>
+    <button class="sec" onclick="resetPage()">Kosongkan</button>
+  </div>
+  <div id="resPage" class="res"></div>
+</div>
+
+<!-- ============ DAFTAR ============ -->
+<div id="sec-list" class="card hide">
+  <h2>Daftar</h2>
+  <div class="row" style="margin-bottom:14px">
+    <button class="sec" onclick="loadList()">Muat ulang</button>
+    <button class="sec" onclick="rebuild(false)">Bangun ulang semua</button>
+    <button class="sec" onclick="rebuild(true)">Ambil ulang preview</button>
+  </div>
+  <div id="list"><p class="sub">Tekan "Muat ulang".</p></div>
+</div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbyaCy5gQEFrQRV_oStnW-cVpthxtT4qqUk_00zbUDgCs7deTJNeDOcNaLM1lBzaz4Fp/exec";
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+try {
+  const k = localStorage.getItem("slkey");
+  if (k) { $("key").value = k; $("remember").checked = true; }
+} catch (e) {}
+
+function saveKey() {
+  try {
+    if ($("remember").checked) localStorage.setItem("slkey", $("key").value);
+    else localStorage.removeItem("slkey");
+  } catch (e) {}
+}
+
+async function call(action, data, btn) {
+  const key = $("key").value.trim();
+  if (!key) { alert("Isi kunci admin dulu"); return null; }
+  saveKey();
+  if (btn) btn.disabled = true;
+  try {
+    const r = await fetch(API, { method: "POST", body: JSON.stringify(Object.assign({ action, key }, data || {})) });
+    const j = await r.json();
+    if (!j.success) { alert(j.message || "Gagal"); return null; }
+    return j;
+  } catch (e) {
+    alert("Gagal terhubung ke server");
+    return null;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function showTab(t) {
+  ["link", "page", "list"].forEach(n => {
+    $("sec-" + n).classList.toggle("hide", n !== t);
+    $("tab-" + n).classList.toggle("on", n === t);
+  });
+  if (t === "list") loadList();
+}
+
+function showResult(id, html) {
+  const r = $(id);
+  r.style.display = "block";
+  r.innerHTML = html;
+}
+
+function copy(btn, text) {
+  navigator.clipboard.writeText(text);
+  const o = btn.textContent;
+  btn.textContent = "Tersalin ✓";
+  setTimeout(() => btn.textContent = o, 1800);
+}
+
+/* ---------- short link ---------- */
+async function createLink() {
+  const url = $("url").value.trim(), code = $("code").value.trim();
+  if (!url || !code) return alert("Lengkapi URL dan nama");
+  $("btnLink").textContent = "Memproses (±10 detik)...";
+  const j = await call("create_link", {
+    url, code,
+    title: $("ptitle").value, description: $("pdesc").value, image: $("pimage").value
+  }, $("btnLink"));
+  $("btnLink").textContent = "Generate";
+  if (!j) return;
+
+  const p = j.preview || {};
+  showResult("resLink",
+    `<b>✅ Berhasil dibuat</b><br><br><a href="${esc(j.shortUrl)}" target="_blank">${esc(j.shortUrl)}</a>` +
+    `<br><br><small>Preview: ${esc(p.title || "-")}${p.image ? "" : " (tanpa gambar)"}</small>` +
+    `<br><br><small>GitHub Pages butuh ±1 menit sebelum link aktif &amp; preview WhatsApp muncul.</small>` +
+    `<br><br><button onclick="copy(this, '${esc(j.shortUrl)}')">Salin Link</button>`);
+  $("url").value = $("code").value = $("ptitle").value = $("pdesc").value = $("pimage").value = "";
+}
+
+/* ---------- halaman link ---------- */
+function addRow(label, url) {
+  const d = document.createElement("div");
+  d.className = "lrow";
+  d.innerHTML = `<input placeholder="Label (mis. DAFTAR HADIR)" value="${esc(label || "")}">` +
+    `<input type="url" placeholder="https://..." value="${esc(url || "")}">` +
+    `<button class="sec" title="Naik" onclick="mv(this,-1)">↑</button>` +
+    `<button class="sec" title="Turun" onclick="mv(this,1)">↓</button>` +
+    `<button class="danger" title="Hapus" onclick="this.parentNode.remove()">✕</button>`;
+  $("linkRows").appendChild(d);
+}
+
+function mv(btn, dir) {
+  const row = btn.parentNode;
+  const sib = dir < 0 ? row.previousElementSibling : row.nextElementSibling;
+  if (!sib) return;
+  if (dir < 0) row.parentNode.insertBefore(row, sib);
+  else row.parentNode.insertBefore(sib, row);
+}
+
+function resetPage() {
+  ["pcode", "pgTitle", "pgDesc", "pgAvatar", "pgFooter"].forEach(i => $(i).value = "");
+  $("pcode").disabled = false;
+  $("linkRows").innerHTML = "";
+  $("pageHead").textContent = "Buat Halaman Link";
+  $("resPage").style.display = "none";
+  $("thFrom").value = "#ffffff"; $("thTo").value = "#c9fbea"; $("thText").value = "#1f2937";
+  $("thBtn").value = "#ffffff"; $("thBtnText").value = "#111827"; $("thRadius").value = 10; $("thStyle").value = "solid";
+  addRow();
+}
+
+async function savePage() {
+  const links = [...document.querySelectorAll("#linkRows .lrow")].map(r => {
+    const i = r.querySelectorAll("input");
+    return { label: i[0].value.trim(), url: i[1].value.trim() };
+  }).filter(l => l.label && l.url);
+
+  if (!$("pcode").value.trim() || !$("pgTitle").value.trim()) return alert("Nama halaman dan judul wajib diisi");
+  if (!links.length) return alert("Tambahkan minimal satu link");
+
+  $("btnPage").textContent = "Menyimpan...";
+  const j = await call("save_page", {
+    code: $("pcode").value.trim(),
+    title: $("pgTitle").value.trim(),
+    description: $("pgDesc").value,
+    avatar: $("pgAvatar").value.trim(),
+    footer: $("pgFooter").value.trim(),
+    links,
+    theme: {
+      bgFrom: $("thFrom").value, bgTo: $("thTo").value, text: $("thText").value,
+      btnBg: $("thBtn").value, btnText: $("thBtnText").value,
+      radius: $("thRadius").value, btnStyle: $("thStyle").value
+    }
+  }, $("btnPage"));
+  $("btnPage").textContent = "Simpan & Publikasikan";
+  if (!j) return;
+
+  showResult("resPage",
+    `<b>✅ ${j.updated ? "Halaman diperbarui" : "Halaman dibuat"}</b><br><br>` +
+    `<a href="${esc(j.shortUrl)}" target="_blank">${esc(j.shortUrl)}</a><br><br>` +
+    `<small>GitHub Pages butuh ±1 menit untuk menampilkan perubahan.</small><br><br>` +
+    `<button onclick="copy(this, '${esc(j.shortUrl)}')">Salin Link</button>`);
+}
+
+async function editPage(code) {
+  const j = await call("get_page", { code });
+  if (!j) return;
+  const p = j.page, t = p.theme || {};
+  showTab("page");
+  resetPage();
+  $("pcode").value = p.code; $("pcode").disabled = true;
+  $("pgTitle").value = p.title; $("pgDesc").value = p.description;
+  $("pgAvatar").value = p.avatar; $("pgFooter").value = p.footer;
+  $("thFrom").value = t.bgFrom || "#ffffff"; $("thTo").value = t.bgTo || "#c9fbea";
+  $("thText").value = t.text || "#1f2937"; $("thBtn").value = t.btnBg || "#ffffff";
+  $("thBtnText").value = t.btnText || "#111827"; $("thRadius").value = t.radius != null ? t.radius : 10;
+  $("thStyle").value = t.btnStyle || "solid";
+  $("linkRows").innerHTML = "";
+  (p.links || []).forEach(l => addRow(l.label, l.url));
+  $("pageHead").textContent = "Edit: " + p.code;
+  window.scrollTo(0, 0);
+}
+
+/* ---------- daftar ---------- */
+async function loadList() {
+  const j = await call("list");
+  if (!j) return;
+  let h = "<h3 style='margin:6px 0'>Halaman Link</h3>";
+  h += j.pages.length ? j.pages.map(p =>
+    `<div class="item"><div class="t"><b>${esc(p.title)}</b><small>${esc(p.short_url)} · ${p.views || 0} kunjungan</small></div>` +
+    `<button class="sec" onclick="copy(this,'${esc(p.short_url)}')">Salin</button>` +
+    `<button class="sec" onclick="editPage('${esc(p.code)}')">Edit</button>` +
+    `<button class="danger" onclick="del('page','${esc(p.code)}')">Hapus</button></div>`).join("")
+    : "<p class='sub'>Belum ada.</p>";
+  h += "<h3 style='margin:18px 0 6px'>Short Link</h3>";
+  h += j.links.length ? j.links.map(l =>
+    `<div class="item"><div class="t"><b>${esc(l.code)}</b><small>${esc(l.url)} · ${l.clicks || 0} klik</small></div>` +
+    `<button class="sec" onclick="copy(this,'${esc(l.short_url)}')">Salin</button>` +
+    `<button class="danger" onclick="del('link','${esc(l.code)}')">Hapus</button></div>`).join("")
+    : "<p class='sub'>Belum ada.</p>";
+  $("list").innerHTML = h;
+}
+
+async function del(type, code) {
+  if (!confirm("Hapus " + code + "? Link-nya akan berhenti bekerja.")) return;
+  if (await call("delete", { type, code })) loadList();
+}
+
+async function rebuild(refetch) {
+  if (!confirm(refetch
+    ? "Ambil ulang preview semua short link dari website tujuan? Bisa memakan waktu lama jika link banyak."
+    : "Bangun ulang semua halaman statis dari spreadsheet?")) return;
+  const j = await call("rebuild", { refetch });
+  if (j) alert(j.count + " halaman diproses. Tunggu ±1 menit agar GitHub Pages memperbarui.");
+}
+
+const PRESETS = {
+  "Kemenkes Mint":  { from:"#ffffff", to:"#c9fbea", text:"#1f2937", btn:"#ffffff", btnText:"#111827", radius:10, style:"solid" },
+  "Gelap":          { from:"#0f172a", to:"#1e293b", text:"#f1f5f9", btn:"#334155", btnText:"#ffffff", radius:12, style:"solid" },
+  "Biru Laut":      { from:"#e0f2fe", to:"#7dd3fc", text:"#0c4a6e", btn:"#0369a1", btnText:"#ffffff", radius:14, style:"solid" },
+  "Sunset":         { from:"#fff7ed", to:"#fda4af", text:"#7c2d12", btn:"#ffffff", btnText:"#9a3412", radius:24, style:"solid" },
+  "Ungu Pastel":    { from:"#faf5ff", to:"#d8b4fe", text:"#581c87", btn:"#ffffff", btnText:"#6b21a8", radius:16, style:"solid" },
+  "Hutan":          { from:"#f0fdf4", to:"#86efac", text:"#14532d", btn:"#166534", btnText:"#ffffff", radius:8,  style:"solid" },
+  "Minimalis":      { from:"#ffffff", to:"#f3f4f6", text:"#111827", btn:"#ffffff", btnText:"#111827", radius:0,  style:"outline" },
+  "Hitam Putih":    { from:"#111111", to:"#111111", text:"#ffffff", btn:"#ffffff", btnText:"#ffffff", radius:30, style:"outline" }
+};
+
+function applyPreset(name) {
+  const p = PRESETS[name];
+  $("thFrom").value = p.from; $("thTo").value = p.to; $("thText").value = p.text;
+  $("thBtn").value = p.btn; $("thBtnText").value = p.btnText;
+  $("thRadius").value = p.radius; $("thStyle").value = p.style;
+}
+
+Object.keys(PRESETS).forEach(name => {
+  const p = PRESETS[name];
+  const b = document.createElement("button");
+  b.type = "button";
+  b.textContent = name;
+  b.style.cssText = "background:linear-gradient(160deg," + p.from + "," + p.to + ");color:" + p.text +
+    ";border:1px solid #ccc;padding:9px 12px;font-size:.8rem";
+  b.onclick = () => applyPreset(name);
+  $("presets").appendChild(b);
+});
+
+addRow();
+</script>
+</body>
+</html>
