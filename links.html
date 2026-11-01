@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<title>Memuat...</title>
+
+<style>
+html,body{margin:0;padding:0}
+</style>
+
+</head>
+<body>
+
+<div id="app"></div>
+
+<script src="linktree.js"></script>
+
+<script>
+
+const API =
+"https://script.google.com/macros/s/AKfycbyaCy5gQEFrQRV_oStnW-cVpthxtT4qqUk_00zbUDgCs7deTJNeDOcNaLM1lBzaz4Fp/exec";
+
+(function(){
+
+  const app = document.getElementById("app");
+
+  const code =
+  new URLSearchParams(location.search)
+  .get("p");
+
+  if(!code){
+    LT.message(app,
+      "Link tidak lengkap",
+      "Alamat halaman ini belum memuat nama halaman.");
+    return;
+  }
+
+  // Simpan salinan terakhir di perangkat, supaya halaman langsung
+  // tampil saat dibuka lagi dan diperbarui di belakang layar.
+  const KEY = "lt:" + code.toLowerCase();
+  let shown = "";
+
+  try{
+    const saved = localStorage.getItem(KEY);
+    if(saved){
+      LT.render(app, JSON.parse(saved));
+      shown = saved;
+    }
+  }catch(e){}
+
+  if(!shown) LT.loading(app);
+
+  function load(){
+
+    fetch(`${API}?page=${encodeURIComponent(code)}`)
+
+    .then(r => r.json())
+
+    .then(data => {
+
+      if(data && data.success){
+
+        const s = JSON.stringify(data.page);
+
+        try{ localStorage.setItem(KEY, s); }catch(e){}
+
+        if(s !== shown){
+          LT.render(app, data.page);
+          shown = s;
+        }
+
+      }else{
+
+        try{ localStorage.removeItem(KEY); }catch(e){}
+
+        LT.message(app,
+          "Halaman tidak ditemukan",
+          "Periksa kembali alamat link yang kamu buka.");
+
+      }
+
+    })
+
+    .catch(() => {
+
+      if(shown) return;
+
+      LT.message(app,
+        "Halaman gagal dimuat",
+        "Periksa koneksi internet, lalu coba lagi.",
+        "Coba lagi",
+        () => { LT.loading(app); load(); });
+
+    });
+
+  }
+
+  load();
+
+})();
+
+</script>
+
+</body>
+</html>
